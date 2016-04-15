@@ -7,9 +7,13 @@
 
 import time
 import io
-counter = 0
-
 import sys
+from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+from datetime import datetime, date, timedelta
+import logging
+
+
+counter = 0
 
 if len(sys.argv) <= 1:
     print "Usage: read_registers.py <ip address 1> [ip address 2] ..."
@@ -18,10 +22,8 @@ if len(sys.argv) <= 1:
 hosts = sys.argv[1:]
 
 # import the server implementation
-from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
 # configure the client logging
-import logging
 logging.basicConfig()
 log = logging.getLogger('./modbus.error')
 log.setLevel(logging.ERROR)
@@ -62,6 +64,7 @@ for host in hosts:
  statenum = rr.registers[50]
  hsTemp = rr.registers[35] 
  rtsTemp = rr.registers[36]
+ rtsTempF = (rtsTemp*9/5)+ 32
  adc_ib_f_1m = rr.registers[39] * i_scale
  hourmeterHI = rr.registers[42]
  hourmeterLO = rr.registers[43]
@@ -84,15 +87,69 @@ for host in hosts:
 # alarm_HI = rr.registers[46]
 # alarm_LO = rr.registers[47]
 # led_state = rr.registers[49]
+rtsTempF = (rtsTemp*9/5)+ 32
+timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
 
- logfilename = time.strftime("%Y-%m-%d")
- file = open('/home/pi/Desktop/powersystem-logfiles/' + logfilename + '.log', 'a+')
- file.write( "%s\t%s\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n" % (time.strftime("%Y-%m-%d\t%H:%M:%S\t%Z"), host, battsV, battsSensedV, battsI, battsV*battsI, arrayV, arrayI, arrayV*arrayI, hsTemp, rtsTemp, rr.registers[50], state[statenum], outPower, inPower, minVb_daily, maxVb_daily, whc_daily, minTb_daily, maxTb_daily, ahc_daily, whc_daily, Pout_max_daily, minTb_daily, maxTb_daily, time_ab_daily, time_eq_daily, time_fl_daily, faults_daily, alarm_daily_HI, alarm_daily_LO, hourmeterHI, hourmeterLO, adc_ib_f_1m))
- file.close()
 
- # Write minimal items to a separated log file with linux date/time for future pylab plotting.
- file = open('/home/pi/Desktop/powersystem-logfiles/plotdailylog' + logfilename + '.log', 'a+')
- file.write( "%f\t%f\t%f\n" % (time.time(), adc_ib_f_1m, rtsTemp))
- file.close()
+# print "Oneliner output tab deliniated for file with key above:"
+# print "date\ttime\tzone\tbattsV\tbattsSensedV\tbattsI\tbattsV*battsI\tarrayV\tarrayI\tarrayV*arrayI\thsTemp\trtsTemp\trr.registers[50]\tstate[statenum]\toutPower\tinPower\tminVb_daily\tmaxVb_daily\twhc_daily\tminTb_daily\tmaxTb_daily"
+# print "%s\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f" % (time.strftime("%Y-%m-%d\t%H:%M:%S\t%Z"), battsV, battsSensedV, battsI, battsV*battsI, arrayV, arrayI, arrayV*arrayI, hsTemp, rtsTemp, rr.registers[50], state[statenum], outPower, inPower, minVb_daily, maxVb_daily, whc_daily, minTb_daily, maxTb_daily)
 
- client.close()
+logfilename = time.strftime("%Y-%m-%d")
+# file = open('/home/pi/Downloads/tristar-python-modbus-master/' + logfilename + '.log', 'a+')
+file = open('/home/pi/Desktop/powersystem-logfiles/' + logfilename + '.log', 'a+')
+#file.write( "%s\t%s\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n" % (time.strftime("%Y-%m-%d\t%H:%M:%S\t%Z"), host, battsV, battsSensedV, battsI, battsV*battsI, arrayV, arrayI, arrayV*arrayI, hsTemp, rtsTemp, rr.registers[50], state[statenum], outPower, inPower, minVb_daily, maxVb_daily, whc_daily, minTb_daily, maxTb_daily, ahc_daily, whc_daily, Pout_max_daily, minTb_daily, maxTb_daily, time_ab_daily, time_eq_daily, time_fl_daily, faults_daily, alarm_daily_HI, alarm_daily_LO, hourmeterHI, hourmeterLO, adc_ib_f_1m))
+file.write( "%s\t%s\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%s\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n" % (datetime.now(), host, battsV, battsSensedV, battsI, battsV*battsI, arrayV, arrayI, arrayV*arrayI, hsTemp, rtsTemp, rr.registers[50], state[statenum], outPower, inPower, minVb_daily, maxVb_daily, whc_daily, minTb_daily, maxTb_daily, ahc_daily, whc_daily, Pout_max_daily, minTb_daily, maxTb_daily, time_ab_daily, time_eq_daily, time_fl_daily, faults_daily, alarm_daily_HI, alarm_daily_LO, hourmeterHI, hourmeterLO, adc_ib_f_1m))
+file.close()
+
+#file = open('/home/pi/Desktop/powersystem-logfiles/plotdailylog' + logfilename + '.log', 'a+')
+# file.write( "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n" % (time.strftime("%H:%M:%S"), battsV, arrayV, adc_ib_f_1m, hsTemp, rtsTemp, outPower, ahc_daily)
+#file.write( "%f\t%f\t%f\n" % (time.time(), adc_ib_f_1m, rtsTemp))
+#file.write( "%s\t%f\t%f\t%f\t%f\t%f\n" % (datetime.now(), rtsTempF, outPower, maxVb_daily, minVb_daily, battsSensedV))
+#file.close()
+
+
+html_str_part1 = """
+<table border=1>
+	 <tr>
+	   <th>Power</th>
+	   <th>Description</th>
+	 </tr>
+	 <indent>
+	   <tr>
+"""
+html_str_part2 = """
+	   </tr>
+	 </indent>
+</table>
+<hr>
+<img src="http://brinbrinbrin.mooo.com/voltagegraph.png"> </img>
+<hr>
+<img src="http://brinbrinbrin.mooo.com/whcgraph.png"> </img>
+<hr>
+<img src="http://brinbrinbrin.mooo.com/tempgraph.png"> </img>
+<hr>
+<img src="http://brinbrinbrin.mooo.com/voltminmaxgraph.png"> </img>
+<hr>
+<img src="http://brinbrinbrin.mooo.com/inputoutputgraph.png"> </img>
+<hr>
+<img src="http://brinbrinbrin.mooo.com/absorbgraph.png"> </img>
+<hr>
+"""
+
+Html_file= open("/var/www/html/index.html","w")
+Html_file.write("         <b>Time</b>: %s " % timestamp)
+Html_file.write(html_str_part1)
+Html_file.write("         <td>%.1f W</td> \n\r          <td>Current Panel Watts to battery</td>\n\r          </tr>" % outPower)
+Html_file.write("         <td>%s</td> \n\r          <td>Charge Controller status</td>\n\r          </tr>" % state[statenum])
+Html_file.write("         <td>%.1f W/H</td> \n\r          <td>Daily Watts so far</td>\n\r          </tr>" % ahc_daily)
+Html_file.write("         <td>%.1f V</td> \n\r          <td>Battery sense voltage</td>\n\r          </tr>" % battsSensedV)
+Html_file.write("         <td>%.1f V</td> \n\r          <td>Minimum battery voltage today</td>\n\r          </tr>" % minVb_daily)
+Html_file.write("         <td>%.1f V</td> \n\r          <td>Maximum battery voltage today</td>\n\r          </tr>" % maxVb_daily)
+Html_file.write("         <td>%.1f F</td> \n\r          <td>Battery Temperature</td>\n\r          </tr>" % rtsTempF)
+Html_file.write(html_str_part2)
+Html_file.close()
+
+
+
+client.close()
